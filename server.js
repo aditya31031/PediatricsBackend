@@ -51,6 +51,6 @@ app.get('/', (req, res) => {
     res.send('Pediatrician Clinic API Running');
 });
 
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// server.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
