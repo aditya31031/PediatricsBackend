@@ -24,8 +24,7 @@ app.use(cors());
 app.set('io', io);
 
 // Database Connection
-// mongoose.connect('mongodb://127.0.0.1:27017/pediatrician_clinic', {
-mongoose.connect('mongodb+srv://aditya31031998_db_user:Adityaadi334@pediatrician-clinic.mx1lp0w.mongodb.net/?appName=pediatrician-clinic', {
+mongoose.connect(process.env.MONGO_URI, {
     //   useNewUrlParser: true,
     //   useUnifiedTopology: true,
 })
