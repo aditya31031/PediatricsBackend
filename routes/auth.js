@@ -23,6 +23,7 @@ router.post('/register', async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
 
         await user.save();
+        await createNotification(user.id, `Welcome to Dr. Sai Manohar's Clinic! We're glad to have you here.`, 'success');
 
         const payload = { user: { id: user.id, role: user.role } };
 

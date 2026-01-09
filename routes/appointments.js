@@ -30,9 +30,8 @@ router.post('/', auth, async (req, res) => {
 
         // Create Notification for User
         await Notification.create({
-            userId: req.user.id,
-            title: 'Appointment Booked',
-            message: `Your appointment is confirmed for ${date} at ${time}.`,
+            user: req.user.id,
+            message: `Booking Confirmed: Your appointment is confirmed for ${date} at ${time}.`,
             type: 'success'
         });
 
@@ -113,9 +112,8 @@ router.put('/:id', [auth, require('../middleware/admin')], async (req, res) => {
             const msg = `Your appointment has been rescheduled to ${updatedAppt.date} at ${updatedAppt.time}.${customMsg}`;
 
             await Notification.create({
-                userId: appointment.userId,
-                title: 'Appointment Modified',
-                message: msg,
+                user: appointment.userId,
+                message: `Appointment Modified: ${msg}`,
                 type: 'info'
             });
             // Notify clients (Socket)
@@ -162,9 +160,8 @@ router.delete('/:id', auth, async (req, res) => {
                 // 1. Create In-App Notification
                 try {
                     await Notification.create({
-                        userId: appointment.userId,
-                        title: 'Appointment Cancelled',
-                        message: cancelMessage,
+                        user: appointment.userId,
+                        message: `Appointment Cancelled: ${cancelMessage}`,
                         type: 'warning'
                     });
                 } catch (e) {
@@ -189,9 +186,8 @@ router.delete('/:id', auth, async (req, res) => {
             // Create a confirmation notification for the user
             try {
                 await Notification.create({
-                    userId: req.user.id,
-                    title: 'Cancellation Confirmed',
-                    message: `You successfully cancelled your appointment for ${appointment.date} at ${appointment.time}.`,
+                    user: req.user.id,
+                    message: `Cancellation Confirmed: You successfully cancelled your appointment for ${appointment.date} at ${appointment.time}.`,
                     type: 'success'
                 });
             } catch (e) {
