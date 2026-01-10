@@ -63,8 +63,9 @@ router.get('/me', auth, async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
+        const normalizedEmail = email.trim();
         // Case-insensitive search
-        let user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+        let user = await User.findOne({ email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') } });
         if (!user) {
             return res.status(400).json({ msg: 'User with this email was not found' });
         }
@@ -146,9 +147,11 @@ router.put('/change-password', auth, async (req, res) => {
 // Forgot Password
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
+    const { email } = req.body;
     try {
+        const normalizedEmail = email.trim();
         // Case-insensitive search
-        const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+        const user = await User.findOne({ email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') } });
         if (!user) {
             return res.status(404).json({ msg: 'User with this email was not found' });
         }
