@@ -20,13 +20,14 @@ router.get('/', async (req, res) => {
 // @desc    Submit a new review/message
 // @access  Public
 router.post('/', async (req, res) => {
-    const { name, email, message } = req.body;
+    const { name, email, message, rating } = req.body;
 
     try {
         const newReview = new Review({
             name,
             email,
             message,
+            rating: rating || 5,
             approved: true // Auto-approve for now
         });
 

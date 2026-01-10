@@ -46,6 +46,19 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// @route   GET api/auth/me
+// @desc    Get current user
+// @access  Private
+router.get('/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // Login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
