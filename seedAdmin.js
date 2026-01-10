@@ -7,7 +7,7 @@ dotenv.config();
 
 const createAdmin = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/pediatrician-clinic');
+        await mongoose.connect('mongodb+srv://Vercel-Admin-pediatrics:Adityaadi334@pediatrics.qsfg2fw.mongodb.net/?appName=pediatrics');
         console.log('MongoDB Connected');
 
         const email = 'admin@clinic.com';
