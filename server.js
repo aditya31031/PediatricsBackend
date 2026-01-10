@@ -26,7 +26,8 @@ app.set('io', io);
 
 // Database Connection
 // mongoose.connect('mongodb://127.0.0.1:27017/pediatrician_clinic', {
-mongoose.connect('mongodb+srv://aditya31031998_db_user:Adityaadi334@pediatrician-clinic.mx1lp0w.mongodb.net/pediatrician_clinic?appName=pediatrician-clinic', {
+//mongoose.connect('mongodb+srv://aditya31031998_db_user:Adityaadi334@pediatrician-clinic.mx1lp0w.mongodb.net/pediatrician_clinic?appName=pediatrician-clinic', {
+mongoose.connect('mongodb+srv://Vercel-Admin-pediatrics:Adityaadi334@pediatrics.qsfg2fw.mongodb.net/?appName=pediatrics', {
     //   useNewUrlParser: true,
     //   useUnifiedTopology: true,
 })
