@@ -127,7 +127,9 @@ router.get('/my-appointments', auth, async (req, res) => {
 // Get ALL Appointments (Admin & Receptionist)
 router.get('/all', [auth, require('../middleware/staff')], async (req, res) => {
     try {
-        const appointments = await Appointment.find().sort({ date: 1, time: 1 });
+        const appointments = await Appointment.find()
+            .populate('userId', 'name email phone children')
+            .sort({ date: 1, time: 1 });
         res.json(appointments);
     } catch (err) {
         console.error(err.message);
