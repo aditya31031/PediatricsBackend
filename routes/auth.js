@@ -38,7 +38,7 @@ router.post('/register', async (req, res) => {
 
         jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: 360000 }, (err, token) => {
             if (err) throw err;
-            res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+            res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, children: user.children } });
         });
     } catch (err) {
         console.error(err.message);
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
 
         jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: 360000 }, (err, token) => {
             if (err) throw err;
-            res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
+            res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, children: user.children } });
         });
     } catch (err) {
         console.error(err.message);
@@ -110,7 +110,7 @@ router.put('/update-profile', auth, async (req, res) => {
         await user.save();
         await createNotification(user.id, 'Your profile information has been updated.', 'success');
 
-        res.json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
+        res.json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, children: user.children } });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

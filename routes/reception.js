@@ -85,4 +85,47 @@ router.post('/quick-register', [auth, staff], async (req, res) => {
     }
 });
 
+// @route   GET /api/reception/patients
+// @desc    Get all patients (Users and their Children)
+// @access  Staff
+router.get('/patients', [auth, staff], async (req, res) => {
+    try {
+        const users = await User.find().select('-password').sort({ date: -1 });
+
+        // Transform data for easier frontend consumption
+        const patients = [];
+        users.forEach(user => {
+            // Add Parent as a patient entry if needed, but mainly children
+            // Let's structure it flat for the table
+            if (user.children && user.children.length > 0) {
+                user.children.forEach(child => {
+                    patients.push({
+                        _id: child._id, // Child ID
+                        isChild: true,
+                        name: child.name,
+                        age: child.age,
+                        gender: child.gender,
+                        bloodGroup: child.bloodGroup,
+                        parentName: user.name,
+                        parentPhone: user.phone,
+                        parentId: user._id,
+                        photo: child.photo
+                    });
+                });
+            } else {
+                // Even if no children, maybe show the user themselves if they are a patient?
+                // For pediatric clinic, usually focus is children. 
+                // But let's add an entry for the user if they have no kids, or just focusing on kids?
+                // Let's stick to the request: "list all the patient, ... show me details of children"
+                // So we prioritize children.
+            }
+        });
+
+        res.json(patients);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;
