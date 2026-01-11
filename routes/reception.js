@@ -65,7 +65,8 @@ router.post('/quick-register', [auth, staff], async (req, res) => {
                 user.children.push({
                     name: child.name,
                     age: child.age,
-                    gender: child.gender
+                    gender: child.gender,
+                    bloodGroup: child.bloodGroup || ''
                 });
             });
         }

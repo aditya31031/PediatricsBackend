@@ -137,6 +137,45 @@ router.get('/all', [auth, require('../middleware/staff')], async (req, res) => {
     }
 });
 
+// Get Public Today's Schedule (for Queue calculation - No PII)
+router.get('/today-public', async (req, res) => {
+    try {
+        // Simple date string matching for now (assuming client sends local date or we use server's simple date)
+        // Ideally, we'd use a robust timezone definition.
+        // For this MVP, we'll try to match the string stored in DB 'YYYY-MM-DD'.
+
+        // Use a regex or getting today's date from server time (UTC+5:30 hardcoded for India if needed, or just let client filter)
+        // Safer: Return specific fields only, client can filter.
+        // Or better: Let's assume server time is reasonable or match all non-cancelled.
+
+        // Currently storing date as String YYYY-MM-DD.
+        // Let's crudely start by returning *all non-cancelled* appointments with minimal checks? 
+        // No, let's try to filter by today.
+
+        // Quick fix: Get current date in India IDT? Or just UTC.
+        // The DB stores '2025-01-01'. 
+        // Let's just return minimal data for ALL active future/today appointments and let client filter?
+        // No, huge data leak risk if not careful.
+
+        // Let's assume the client passes the date?
+        const { date } = req.query;
+        let queryDate = date;
+        if (!queryDate) {
+            queryDate = new Date().toISOString().split('T')[0];
+        }
+
+        const appointments = await Appointment.find({
+            date: queryDate,
+            status: { $ne: 'cancelled' }
+        }).select('time status category').sort({ time: 1 });
+
+        res.json(appointments);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // Update Appointment (Reschedule/Modify - Staff)
 router.put('/:id', [auth, require('../middleware/staff')], async (req, res) => {
     try {
