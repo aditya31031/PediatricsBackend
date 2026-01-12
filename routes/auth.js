@@ -59,8 +59,14 @@ router.post('/register', async (req, res) => {
 
 // Send OTP
 router.post('/send-otp', async (req, res) => {
-    const { phone } = req.body;
+    let { phone } = req.body;
     try {
+        // Basic formatting: Default to +91 (India) if no country code provided
+        // This prevents failures if user enters just "9876543210"
+        if (phone && !phone.startsWith('+')) {
+            phone = '+91' + phone.trim();
+        }
+
         // Check if user already exists
         let user = await User.findOne({ phone });
         if (user) {
@@ -85,7 +91,7 @@ router.post('/send-otp', async (req, res) => {
             `${BASE_URL}/gateway/devices/${DEVICE_ID}/send-sms`,
             {
                 recipients: [phone],
-                message: `Your OTP for Dr. Sai Manohar's Clinic is ${otp}. Valid for 10 minutes.`
+                message: `Your OTP for Dr. Sai Manohar's Clinic is ${otp}. Valid for 10 minutes. @pediatrics-app # ${otp}`
             },
             { headers: { 'x-api-key': API_KEY } }
         );
