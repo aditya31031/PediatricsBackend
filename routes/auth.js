@@ -23,7 +23,15 @@ router.post('/register', async (req, res) => {
         if (process.env.NODE_ENV !== 'test') { // Skip for tests if needed, or better, mock it
             const otpRecord = await Otp.findOne({ phone, otp });
             if (!otpRecord) {
-                return res.status(400).json({ msg: 'Invalid or expired OTP' });
+                // DEBUGGING: Return the values we searched for to see why it failed
+                return res.status(400).json({
+                    msg: 'Invalid or expired OTP',
+                    debug_info: {
+                        searched_phone: phone,
+                        searched_otp: otp,
+                        db_has_records_for_this_phone: await Otp.countDocuments({ phone })
+                    }
+                });
             }
             // Delete used OTP
             await Otp.deleteOne({ _id: otpRecord._id });
