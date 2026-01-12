@@ -15,23 +15,29 @@ const createAdmin = async () => {
         const name = 'Dr. Sai Manohar';
 
         let user = await User.findOne({ email });
-        if (user) {
-            console.log('Admin already exists');
-            process.exit();
-        }
-
-        user = new User({
-            name,
-            email,
-            password,
-            role: 'admin'
-        });
 
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        await user.save();
-        console.log('Admin User Created');
+        if (user) {
+            console.log('Admin already exists, updating password...');
+            user.password = hashedPassword;
+            user.phone = '1234567890'; // Add dummy phone
+            user.role = 'admin'; // Ensure role is admin
+            await user.save();
+            console.log('Admin Password Reset');
+        } else {
+            user = new User({
+                name,
+                email,
+                phone: '1234567890', // Add dummy phone
+                password: hashedPassword,
+                role: 'admin'
+            });
+            await user.save();
+            console.log('Admin User Created');
+        }
+
         console.log('Email: admin@clinic.com');
         console.log('Password: admin');
         process.exit();

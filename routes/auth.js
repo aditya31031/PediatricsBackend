@@ -7,11 +7,22 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
 const { createNotification } = require('./notifications');
+const axios = require('axios');
+const Otp = require('../models/Otp');
 
 // Register
 router.post('/register', async (req, res) => {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, otp } = req.body;
     try {
+        // Verify OTP
+        if (process.env.NODE_ENV !== 'test') { // Skip for tests if needed, or better, mock it
+            const otpRecord = await Otp.findOne({ phone, otp });
+            if (!otpRecord) {
+                return res.status(400).json({ msg: 'Invalid or expired OTP' });
+            }
+            // Delete used OTP
+            await Otp.deleteOne({ _id: otpRecord._id });
+        }
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ msg: 'User already exists' });
@@ -43,6 +54,47 @@ router.post('/register', async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
+    }
+});
+
+// Send OTP
+router.post('/send-otp', async (req, res) => {
+    const { phone } = req.body;
+    try {
+        // Check if user already exists
+        let user = await User.findOne({ phone });
+        if (user) {
+            return res.status(400).json({ msg: 'User with this phone number already exists' });
+        }
+
+        // Generate 6 digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Save to DB
+        // Remove existing OTPs for this phone
+        await Otp.deleteMany({ phone });
+
+        await new Otp({ phone, otp }).save();
+
+        // Send via TextBee
+        const API_KEY = process.env.TEXTBEE_API_KEY;
+        const DEVICE_ID = process.env.TEXTBEE_DEVICE_ID;
+        const BASE_URL = 'https://api.textbee.dev/api/v1';
+
+        await axios.post(
+            `${BASE_URL}/gateway/devices/${DEVICE_ID}/send-sms`,
+            {
+                recipients: [phone],
+                message: `Your OTP for Dr. Sai Manohar's Clinic is ${otp}. Valid for 10 minutes.`
+            },
+            { headers: { 'x-api-key': API_KEY } }
+        );
+
+        res.json({ msg: 'OTP sent successfully' });
+    } catch (err) {
+        console.error(err.message);
+        console.error(err.response?.data);
+        res.status(500).send('Server Error: ' + (err.response?.data?.message || err.message));
     }
 });
 

@@ -10,7 +10,7 @@ const { Server } = require("socket.io");
 const io = new Server(server, {
     cors: {
         // origin: "http://localhost:5173", // Client URL
-        origin: ["https://pediatrics-liard.vercel.app", "http://localhost:5173"], // Client URL
+        origin: ["saimanoharpediatric.vercel.app", "http://localhost:5173"], // Client URL
         methods: ["GET", "POST"]
     }
 });
@@ -49,6 +49,7 @@ app.use('/api/notifications', require('./routes/notifications').router);
 app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/reception', require('./routes/reception')); // Reception Routes
+app.use('/api/admin', require('./routes/admin')); // Admin Analytics Routes
 
 app.get('/', (req, res) => {
     res.send('Pediatrician Clinic API Running - V2 (Multer+ImageKit)');
