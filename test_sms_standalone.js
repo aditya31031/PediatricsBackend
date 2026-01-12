@@ -8,6 +8,7 @@ const DEVICE_ID = '6964835e9f385ce7310f492a';
 // Example: '+919876543210' for India
 const TEST_PHONE_NUMBER = '+919066910183';
 
+
 const sendTestSms = async () => {
     console.log('Attempting to send SMS...');
     console.log(`API Key: ${API_KEY.substring(0, 5)}...`);
