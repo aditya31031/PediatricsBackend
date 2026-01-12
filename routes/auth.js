@@ -11,31 +11,42 @@ const axios = require('axios');
 const Otp = require('../models/Otp');
 
 // Register (Last updated: FORCE_DEPLOY_CHECK)
+// Register
 router.post('/register', async (req, res) => {
     let { name, email, password, phone, otp } = req.body;
+    console.log('------------------------------------------------');
+    console.log('REGISTER ATTEMPT:', { name, email, phone_raw: phone, otp }); // Log raw input
+
     try {
-        // Basic formatting: Default to +91 (India) if no country code provided
-        if (phone && !phone.startsWith('+')) {
-            phone = '+91' + phone.trim();
+        // Normalize Phone
+        if (phone) {
+            phone = phone.trim(); // Remove leading/trailing spaces first
+            if (!phone.startsWith('+')) {
+                phone = '+91' + phone;
+            }
         }
+        console.log('NORMALIZED PHONE (Register):', phone);
 
         // Verify OTP
-        if (process.env.NODE_ENV !== 'test') { // Skip for tests if needed, or better, mock it
+        if (process.env.NODE_ENV !== 'test') {
             const otpRecord = await Otp.findOne({ phone, otp });
+            console.log('OTP SEARCH RESULT:', otpRecord ? 'Found' : 'Not Found');
+
             if (!otpRecord) {
-                // DEBUGGING: Return the values we searched for to see why it failed
+                // Check if any OTP exists for this phone (to see if it expired or mismatch)
+                const anyOtp = await Otp.findOne({ phone });
+                console.log(`Debug: Record for ${phone} exists?`, !!anyOtp);
+                if (anyOtp) console.log(`Debug: Existing OTP is ${anyOtp.otp}, User sent ${otp}`);
+
                 return res.status(400).json({
                     msg: 'Invalid or expired OTP',
-                    debug_info: {
-                        searched_phone: phone,
-                        searched_otp: otp,
-                        db_has_records_for_this_phone: await Otp.countDocuments({ phone })
-                    }
+                    debug_info: { searched_phone: phone, searched_otp: otp }
                 });
             }
             // Delete used OTP
             await Otp.deleteOne({ _id: otpRecord._id });
         }
+
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ msg: 'User already exists' });
@@ -47,16 +58,20 @@ router.post('/register', async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
 
         await user.save();
-        await createNotification(user.id, `Welcome to Dr. Sai Manohar's Clinic! We're glad to have you here.`, 'success');
 
-        // Emit real-time notification
-        const io = req.app.get('io');
-        io.emit(`notification:${user.id}`, {
-            title: 'Welcome!',
-            message: `Welcome to Dr. Sai Manohar's Clinic! We're glad to have you here.`,
-            read: false,
-            createdAt: new Date()
-        });
+        // Notification logic (non-blocking if possible, but keeping sequential for now)
+        try {
+            await createNotification(user.id, `Welcome to Dr. Sai Manohar's Clinic! We're glad to have you here.`, 'success');
+            const io = req.app.get('io');
+            io.emit(`notification:${user.id}`, {
+                title: 'Welcome!',
+                message: `Welcome to Dr. Sai Manohar's Clinic! We're glad to have you here.`,
+                read: false,
+                createdAt: new Date()
+            });
+        } catch (noteErr) {
+            console.error('Notification Error (Non-fatal):', noteErr.message);
+        }
 
         const payload = { user: { id: user.id, role: user.role } };
 
@@ -65,7 +80,7 @@ router.post('/register', async (req, res) => {
             res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, children: user.children } });
         });
     } catch (err) {
-        console.error(err.message);
+        console.error('REGISTER ERROR:', err.message);
         res.status(500).send('Server error');
     }
 });
@@ -73,27 +88,34 @@ router.post('/register', async (req, res) => {
 // Send OTP
 router.post('/send-otp', async (req, res) => {
     let { phone } = req.body;
+    console.log('------------------------------------------------');
+    console.log('SEND OTP REQUEST:', { phone_raw: phone });
+
     try {
-        // Basic formatting: Default to +91 (India) if no country code provided
-        // This prevents failures if user enters just "9876543210"
-        if (phone && !phone.startsWith('+')) {
-            phone = '+91' + phone.trim();
+        // Normalize Phone
+        if (phone) {
+            phone = phone.trim();
+            if (!phone.startsWith('+')) {
+                phone = '+91' + phone;
+            }
         }
+        console.log('NORMALIZED PHONE (Send OTP):', phone);
 
         // Check if user already exists
         let user = await User.findOne({ phone });
         if (user) {
+            console.log('User already exists with this phone');
             return res.status(400).json({ msg: 'User with this phone number already exists' });
         }
 
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log('GENERATED OTP:', otp);
 
         // Save to DB
-        // Remove existing OTPs for this phone
         await Otp.deleteMany({ phone });
-
         await new Otp({ phone, otp }).save();
+        console.log('OTP SAVED TO DB');
 
         // Send via TextBee
         const API_KEY = process.env.TEXTBEE_API_KEY;
@@ -108,10 +130,11 @@ router.post('/send-otp', async (req, res) => {
             },
             { headers: { 'x-api-key': API_KEY } }
         );
+        console.log('OTP SENT TO TEXTBEE');
 
         res.json({ msg: 'OTP sent successfully' });
     } catch (err) {
-        console.error(err.message);
+        console.error('SEND OTP ERROR:', err.message);
         console.error(err.response?.data);
         res.status(500).send('Server Error: ' + (err.response?.data?.message || err.message));
     }
